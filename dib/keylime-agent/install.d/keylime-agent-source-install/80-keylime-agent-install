@@ -1,0 +1,34 @@
+#!/bin/bash
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+SCRIPTDIR=$(dirname $0)
+VENVDIR=/opt/ironic-python-agent
+KLADIR=/tmp/keylime-agent
+
+# install Keylime-agent inside the virtual environment
+$VENVDIR/bin/pip install -r $KLADIR/requirements.txt $KLADIR
+
+ln -s $VENVDIR/bin/keylime_agent /usr/local/bin/keylime_agent
+
+case "$DIB_INIT_SYSTEM" in
+    upstart)
+        install -D -g root -o root -m 0755 ${SCRIPTDIR}/keylime-agent.conf /etc/init/keylime-agent.conf
+        ;;
+    systemd)
+        install -D -g root -o root -m 0644 ${SCRIPTDIR}/keylime-agent.service /usr/lib/systemd/system/keylime-agent.service
+        ;;
+    sysv)
+        install -D -g root -o root -m 0755 ${SCRIPTDIR}/keylime-agent.init /etc/init.d/keylime-agent.init
+        update-rc.d keylime-agent.init defaults
+        ;;
+    *)
+        echo "Unsupported init system"
+        exit 1
+        ;;
+esac
+

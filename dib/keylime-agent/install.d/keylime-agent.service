@@ -1,0 +1,11 @@
+[Unit]
+Description=The Keylime agent
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/keylime_agent
+Restart=always
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target
